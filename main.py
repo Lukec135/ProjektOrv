@@ -1,19 +1,38 @@
-import numpy as np
-import cv2
-face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
-eye_cascade = cv2.CascadeClassifier("haarcascade_eye.xml")
-#save the image(i) in the same directory
-img = cv2.imread("Slike/jozek.jpg")
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-for (x,y,w,h) in faces:
-    img = cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
-    roi_gray = gray[y:y+h, x:x+w]
-    roi_color = img[y:y+h, x:x+w]
-    cv2.imwrite('Obraz/'+str(w) + str(h) + '_faces.jpg', roi_color)
-#    eyes = eye_cascade.detectMultiScale(roi_gray)
-#for (ex,ey,ew,eh) in eyes:
-#        cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
-cv2.imshow('img',img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+import os
+
+from flask import Flask
+from flask import request, jsonify
+
+# import io
+# import base64
+# from PIL import Image
+
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def hello_world():
+    name = os.environ.get("NAME", "Mernik in Adam")
+    return "Hello {}!".format(name)
+
+
+@app.route('/dodaj', methods=['POST'])
+def dodaj_sliko():
+    if not request.json or not 'ime' in request.json:
+        return 400
+
+    ime = request.json['ime']
+    slika = request.json['slika']
+
+    # with open("imageToSave.png", "wb") as fh:
+    #    fh.write(base64.decodebytes(img_data))
+
+    # img = Image.open(io.BytesIO(base64.decodebytes(bytes(base64_str, "utf-8"))))
+    # img.save("slike\\" + ime + '.png')
+
+    return ("DELA ime: " + ime + " slika: " + slika).jsonify
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
