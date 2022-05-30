@@ -67,6 +67,64 @@ def findFace(target_file):
 
 ##############################################################################
 
+app = Flask(__name__)
+
+
+@app.route("/")
+def hello_world():
+    name = os.environ.get("NAME", "World")
+    return "Hello {}!".format(name)
+
+
+@app.route('/preveri', methods=['POST'])
+def preveri():
+    if not request.json or not 'ime' in request.json:
+        return 400
+
+    ime = request.json['ime']
+    slika = request.json['slika']
+
+    try:
+        # Assuming base64_str is the string value without 'data:image/jpeg;base64,'
+        img3 = Image.open(io.BytesIO(base64.decodebytes(bytes(slika, "utf-8"))))
+        img3.save("iskana/" + ime + '.png')
+
+        vse_slike_internal()
+
+        ##############################################################################
+
+        #face_db = []
+        for filename in glob.glob('slike/*'):  # assuming png
+            face_db.append(filename)
+        #return str(len(face_db))
+
+        #faces = []
+        for img_path0 in face_db:
+            #print(img_path0)
+            img0 = detect_face(img_path0)
+            #if img0 is not None:
+            faces.append(img0)
+        #return str(len(faces)) !! ne izpise
+
+        ids = np.array([i for i in range(0, len(faces))])
+
+        pre_built_model = "pre-built-model.yml"
+
+        model.train(faces, ids)
+        model.save(pre_built_model)
+
+        image_found = findFace("iskana/" + ime + '.png')
+
+        ##############################################################################
+
+        value = {
+            "ime": str(image_found)
+        }
+        return json.dumps(value)
+    except Exception as e:
+        return str(e)
+
+
 @app.route('/vse_slike', methods=['POST'])
 def vse_slike():
 
