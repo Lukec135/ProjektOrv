@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 import os
 
 from flask import Flask
@@ -10,11 +12,10 @@ from PIL import Image
 import requests
 import json
 
-
 #######################################
-#numpy~=1.22.4
-#opencv-python~=4.5.5.64
-#opencv-contrib-python~=4.5.5.64
+# numpy~=1.22.4
+# opencv-python~=4.5.5.64
+# opencv-contrib-python~=4.5.5.64
 
 import re
 
@@ -24,9 +25,7 @@ import cv2
 
 import glob
 
-
-
-face_detector_path = "haarcascade_frontalface_default.xml"
+face_detector_path = 'haarcascade_frontalface_default.xml'
 faceCascade = cv2.CascadeClassifier(face_detector_path)  # POLJUBNI DETEKTOR
 
 model = cv2.face.LBPHFaceRecognizer_create()  # Local Binary Patterns Histograms #LBP   <---- !!!
@@ -39,7 +38,7 @@ def detect_face(img_path1):
     img1 = cv2.imread(img_path1)
 
     detected_faces = faceCascade.detectMultiScale(img1, 1.3, 5)
-    x, y, w, h = detected_faces[0]  # focus on the 1st face in the image
+    (x, y, w, h) = detected_faces[0]  # focus on the 1st face in the image
 
     img1 = img1[y:y + h, x:x + w]  # focus on the detected area
     img1 = cv2.resize(img1, (224, 224))
@@ -50,18 +49,21 @@ def detect_face(img_path1):
 
 def findFace(target_file):
     img2 = detect_face(target_file)
+
     # print(img.shape)
 
-    idx, confidence = model.predict(img2)
+    (idx, confidence) = model.predict(img2)
 
-
-    print("Confidence: ", round(confidence, 2))
-    print("Path: ", face_db[idx])
+    print ('Confidence: ', round(confidence, 2))
+    print ('Path: ', face_db[idx])
     match_path = face_db[idx]
-    #match_name = re.sub(r'^.*?\\', '', match_path)
 
-    print("Name: ", match_path)
-    #plt.show()
+    # match_name = re.sub(r'^.*?\\', '', match_path)
+
+    print ('Name: ', match_path)
+
+    # plt.show()
+
     return match_path
 
 
@@ -70,10 +72,10 @@ def findFace(target_file):
 app = Flask(__name__)
 
 
-@app.route("/")
+@app.route('/')
 def hello_world():
-    name = os.environ.get("NAME", "World")
-    return "Hello {}!".format(name)
+    name = os.environ.get('NAME', 'World')
+    return 'Hello {}!'.format(name)
 
 
 @app.route('/preveri', methods=['POST'])
@@ -85,41 +87,50 @@ def preveri():
     slika = request.json['slika']
 
     try:
+
         # Assuming base64_str is the string value without 'data:image/jpeg;base64,'
-        img3 = Image.open(io.BytesIO(base64.decodebytes(bytes(slika, "utf-8"))))
-        img3.save("iskana/" + ime + '.png')
+
+        img3 = Image.open(io.BytesIO(base64.decodebytes(bytes(slika,
+                          'utf-8'))))
+        img3.save('iskana/' + ime + '.png')
 
         vse_slike_internal()
 
-        ##############################################################################
+        # #############################################################################
 
-        #face_db = []
+        # face_db = []
+
         for filename in glob.glob('slike/*'):  # assuming png
             face_db.append(filename)
-        #return str(len(face_db))
 
-        #faces = []
+        # return str(len(face_db))
+
+        # faces = []
+
         for img_path0 in face_db:
-            #print(img_path0)
+
+            # print(img_path0)
+
             img0 = detect_face(img_path0)
-            #if img0 is not None:
+
+            # if img0 is not None:
+
             faces.append(img0)
-        #return str(len(faces)) !! ne izpise
+
+        # return str(len(faces)) !! ne izpise
 
         ids = np.array([i for i in range(0, len(faces))])
 
-        pre_built_model = "pre-built-model.yml"
+        pre_built_model = 'pre-built-model.yml'
 
         model.train(faces, ids)
         model.save(pre_built_model)
 
-        image_found = findFace("iskana/" + ime + '.png')
+        image_found = findFace('iskana/' + ime + '.png')
 
-        ##############################################################################
+        # #############################################################################
 
-        value = {
-            "ime": str(image_found)
-        }
+        value = {'ime': str(image_found)}
         return json.dumps(value)
     except Exception as e:
         return str(e)
@@ -140,16 +151,19 @@ def vse_slike():
             slika = i['slika']
 
             # Assuming base64_str is the string value without 'data:image/jpeg;base64,'
-            img4 = Image.open(io.BytesIO(base64.decodebytes(bytes(slika, "utf-8"))))
-            img4.save('slike/' + ime + ' ' + str(c) + '.png')
-            c = c+1
 
-        _, _, files = next(os.walk("slike"))
+            img4 = \
+                Image.open(io.BytesIO(base64.decodebytes(bytes(slika,
+                           'utf-8'))))
+            img4.save('slike/' + ime + ' ' + str(c) + '.png')
+            c = c + 1
+
+        (_, _, files) = next(os.walk('slike'))
         file_count = len(files)
-        #return str(file_count)
-        value = {
-            "velikost": str(file_count)
-        }
+
+        # return str(file_count)
+
+        value = {'velikost': str(file_count)}
         return json.dumps(value)
     except Exception as e:
         return str(e)
@@ -167,12 +181,16 @@ def vse_slike_internal():
             slika = i['slika']
 
             # Assuming base64_str is the string value without 'data:image/jpeg;base64,'
-            img4 = Image.open(io.BytesIO(base64.decodebytes(bytes(slika, "utf-8"))))
+
+            img4 = \
+                Image.open(io.BytesIO(base64.decodebytes(bytes(slika,
+                           'utf-8'))))
             img4.save('slike/' + ime + ' ' + str(c) + '.png')
-            c = c+1
+            c = c + 1
     except Exception as e:
         return str(e)
 
 
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT',
+            8080)))
