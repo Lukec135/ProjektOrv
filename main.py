@@ -1,21 +1,14 @@
 import os
-
 from flask import Flask
 from flask import request
-
 import io
 import base64
 from PIL import Image
-
 import requests
 import json
-
 import numpy as np
-
 import cv2
-
 import glob
-
 
 face_detector_path = "haarcascade_frontalface_default.xml"
 faceCascade = cv2.CascadeClassifier(face_detector_path)
@@ -25,16 +18,15 @@ model = cv2.face.LBPHFaceRecognizer_create() #LBP
 face_db = []
 faces = []
 
-
 def zaznajObraz(img_path1):
     try:
         slika1 = cv2.imread(img_path1)
 
         detected_faces = faceCascade.detectMultiScale(slika1, 1.3, 5)
-        x, y, w, h = detected_faces[0]  # focus on the 1st face in the image
+        x, y, w, h = detected_faces[0]  # vrne prvi obraz na sliki
 
-        slika1 = slika1[y:y + h, x:x + w]  # focus on the detected area
-        slika1 = cv2.resize(slika1, (700, 700))
+        slika1 = slika1[y:y + h, x:x + w]  # se fokusiramo na zaznano območje
+        slika1 = cv2.resize(slika1, (224, 224))
         slika1 = cv2.cvtColor(slika1, cv2.COLOR_BGR2GRAY)
     except:
         print("No face detected.")
@@ -60,8 +52,8 @@ def najdiObraz(target_file):
     return match_path
 
 
-app = Flask(__name__)
 
+app = Flask(__name__)
 
 
 
@@ -111,7 +103,34 @@ def preveri():
         return str(e)
 
 
+@app.route('/vse_slike', methods=['POST'])
+def vse_slike():
 
+    url = 'https://silent-eye-350012.oa.r.appspot.com/images/listAPI'
+    response = requests.post(url)
+
+    try:
+        data = response.json()
+
+        c = int(0)
+        for i in data['images']:
+            ime = i['ime']
+            slika = i['slika']
+
+            # Assuming base64_str is the string value without 'data:image/jpeg;base64,'
+            img4 = Image.open(io.BytesIO(base64.decodebytes(bytes(slika, "utf-8"))))
+            img4.save('slike/' + ime + ' ' + str(c) + '.png')
+            c = c+1
+
+        _, _, files = next(os.walk("slike"))
+        file_count = len(files)
+        #return str(file_count)
+        value = {
+            "velikost": str(file_count)
+        }
+        return json.dumps(value)
+    except Exception as e:
+        return str(e)
 
 
 def vse_slike_internal():
