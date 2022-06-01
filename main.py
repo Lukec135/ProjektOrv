@@ -43,7 +43,7 @@ def najdiObraz(target_file):
     idx, confidence = model.predict(img2)
 
 
-    print("Confidence: ", round(confidence, 2))
+    print("Procenti zaupanja: ", round(confidence, 2))
     print("Path: ", face_db[idx])
     match_path = face_db[idx]
     #match_name = re.sub(r'^.*?\\', '', match_path)
