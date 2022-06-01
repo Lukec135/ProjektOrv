@@ -34,7 +34,7 @@ def zaznajObraz(img_path1):
         x, y, w, h = detected_faces[0]  # focus on the 1st face in the image
 
         slika1 = slika1[y:y + h, x:x + w]  # focus on the detected area
-        slika1 = cv2.resize(slika1, (224, 224))
+        slika1 = cv2.resize(slika1, (700, 700))
         slika1 = cv2.cvtColor(slika1, cv2.COLOR_BGR2GRAY)
     except:
         print("No face detected.")
@@ -63,10 +63,6 @@ def najdiObraz(target_file):
 app = Flask(__name__)
 
 
-@app.route("/")
-def hello_world():
-    name = os.environ.get("NAME", "World")
-    return "Hello {}!".format(name)
 
 
 @app.route('/preveri', methods=['POST'])
@@ -115,34 +111,7 @@ def preveri():
         return str(e)
 
 
-@app.route('/vse_slike', methods=['POST'])
-def vse_slike():
 
-    url = 'https://silent-eye-350012.oa.r.appspot.com/images/listAPI'
-    response = requests.post(url)
-
-    try:
-        data = response.json()
-
-        c = int(0)
-        for i in data['images']:
-            ime = i['ime']
-            slika = i['slika']
-
-            # Assuming base64_str is the string value without 'data:image/jpeg;base64,'
-            img4 = Image.open(io.BytesIO(base64.decodebytes(bytes(slika, "utf-8"))))
-            img4.save('slike/' + ime + ' ' + str(c) + '.png')
-            c = c+1
-
-        _, _, files = next(os.walk("slike"))
-        file_count = len(files)
-        #return str(file_count)
-        value = {
-            "velikost": str(file_count)
-        }
-        return json.dumps(value)
-    except Exception as e:
-        return str(e)
 
 
 def vse_slike_internal():
