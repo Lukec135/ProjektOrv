@@ -26,25 +26,25 @@ face_db = []
 faces = []
 
 
-def detect_face(img_path1):
+def zaznajObraz(img_path1):
     try:
-        img1 = cv2.imread(img_path1)
+        slika1 = cv2.imread(img_path1)
 
-        detected_faces = faceCascade.detectMultiScale(img1, 1.3, 5)
+        detected_faces = faceCascade.detectMultiScale(slika1, 1.3, 5)
         x, y, w, h = detected_faces[0]  # focus on the 1st face in the image
 
-        img1 = img1[y:y + h, x:x + w]  # focus on the detected area
-        img1 = cv2.resize(img1, (224, 224))
-        img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+        slika1 = slika1[y:y + h, x:x + w]  # focus on the detected area
+        slika1 = cv2.resize(slika1, (224, 224))
+        slika1 = cv2.cvtColor(slika1, cv2.COLOR_BGR2GRAY)
     except:
         print("No face detected.")
         return None
 
-    return img1
+    return slika1
 
 
-def findFace(target_file):
-    img2 = detect_face(target_file)
+def najdiObraz(target_file):
+    img2 = zaznajObraz(target_file)
     if img2 is None:
         return "No_face"
 
@@ -82,31 +82,33 @@ def preveri():
         img3 = Image.open(io.BytesIO(base64.decodebytes(bytes(slika, "utf-8"))))
         img3.save("iskana/" + ime + '.png')
 
+
         vse_slike_internal()
 
-
-        for filename in glob.glob('slike/*'):  # assuming png
+        for filename in glob.glob('slike/*'):  #lahko je katerikoli format
             face_db.append(filename)
+
         #return str(len(face_db))
 
         for img_path0 in face_db:
-            img0 = detect_face(img_path0)
+            img0 = zaznajObraz(img_path0)
             if img0 is not None:
                 faces.append(img0)
 
         ids = np.array([i for i in range(0, len(faces))])
+
 
         pre_built_model = "pre-built-model.yml"
 
         model.train(faces, ids)
         model.save(pre_built_model)
 
-        image_found = findFace("iskana/" + ime + '.png')
-        if image_found is 'No_face':
+        slikaZNajdenimObrazom = najdiObraz("iskana/" + ime + '.png')
+        if slikaZNajdenimObrazom is 'No_face':
             return "ERROR_no_face_detected"
 
         value = {
-            "ime": str(image_found)
+            "ime": str(slikaZNajdenimObrazom)
         }
         return json.dumps(value)
     except Exception as e:
