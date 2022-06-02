@@ -1,40 +1,32 @@
 import os
-
 from flask import Flask
 from flask import request
-
 import io
 import base64
 from PIL import Image
-
 import requests
 import json
-
 import numpy as np
-
 import cv2
-
 import glob
-
 
 face_detector_path = "haarcascade_frontalface_default.xml"
 faceCascade = cv2.CascadeClassifier(face_detector_path)
 
 model = cv2.face.LBPHFaceRecognizer_create() #LBP
 
-face_db = []
-faces = []
+slike_navadne = []
+slike_obrazov = []
 
-
-def zaznajObraz(img_path1):
+def zaznajObraz(pot_slike):
     try:
-        slika1 = cv2.imread(img_path1)
+        slika1 = cv2.imread(pot_slike)
 
-        detected_faces = faceCascade.detectMultiScale(slika1, 1.3, 5)
-        x, y, w, h = detected_faces[0]  # focus on the 1st face in the image
+        zaznani_obrazi = faceCascade.detectMultiScale(slika1, 1.3, 5)
+        x, y, w, h = zaznani_obrazi[0]  # vrne prvi obraz na sliki
 
-        slika1 = slika1[y:y + h, x:x + w]  # focus on the detected area
-        slika1 = cv2.resize(slika1, (700, 700))
+        slika1 = slika1[y:y + h, x:x + w]  # se fokusiramo na zaznano območje
+        slika1 = cv2.resize(slika1, (224, 224))
         slika1 = cv2.cvtColor(slika1, cv2.COLOR_BGR2GRAY)
     except:
         print("No face detected.")
@@ -43,25 +35,21 @@ def zaznajObraz(img_path1):
     return slika1
 
 
-def najdiObraz(target_file):
-    img2 = zaznajObraz(target_file)
+def najdiObraz(glavna_slika):
+    img2 = zaznajObraz(glavna_slika)
     if img2 is None:
         return "No_face"
 
-    idx, confidence = model.predict(img2)
+    index, prepricanje = model.predict(img2)
+    print("Procent prepričanja: ", round(prepricanje, 2))
+    ime_slike = slike_navadne[index]
 
+    print("Ime: ", ime_slike)
+    return ime_slike
 
-    print("Confidence: ", round(confidence, 2))
-    print("Path: ", face_db[idx])
-    match_path = face_db[idx]
-    #match_name = re.sub(r'^.*?\\', '', match_path)
-
-    print("Name: ", match_path)
-    return match_path
 
 
 app = Flask(__name__)
-
 
 
 
@@ -82,22 +70,22 @@ def preveri():
         vse_slike_internal()
 
         for filename in glob.glob('slike/*'):  #lahko je katerikoli format
-            face_db.append(filename)
+            slike_navadne.append(filename)
 
         #return str(len(face_db))
 
-        for img_path0 in face_db:
+        for img_path0 in slike_navadne:
             img0 = zaznajObraz(img_path0)
             if img0 is not None:
-                faces.append(img0)
+                slike_obrazov.append(img0)
 
-        ids = np.array([i for i in range(0, len(faces))])
+        np_indexes = np.array([i for i in range(0, len(slike_obrazov))])
 
 
-        pre_built_model = "pre-built-model.yml"
+        znacilnice = "znacilnice.yml"
 
-        model.train(faces, ids)
-        model.save(pre_built_model)
+        model.train(slike_obrazov, np_indexes)
+        model.save(znacilnice)
 
         slikaZNajdenimObrazom = najdiObraz("iskana/" + ime + '.png')
         if slikaZNajdenimObrazom is 'No_face':
@@ -111,7 +99,34 @@ def preveri():
         return str(e)
 
 
+@app.route('/vse_slike', methods=['POST'])
+def vse_slike():
 
+    url = 'https://silent-eye-350012.oa.r.appspot.com/images/listAPI'
+    response = requests.post(url)
+
+    try:
+        data = response.json()
+
+        c = int(0)
+        for i in data['images']:
+            ime = i['ime']
+            slika = i['slika']
+
+            # Assuming base64_str is the string value without 'data:image/jpeg;base64,'
+            img4 = Image.open(io.BytesIO(base64.decodebytes(bytes(slika, "utf-8"))))
+            img4.save('slike/' + ime + ' ' + str(c) + '.png')
+            c = c+1
+
+        _, _, files = next(os.walk("slike"))
+        file_count = len(files)
+        #return str(file_count)
+        value = {
+            "velikost": str(file_count)
+        }
+        return json.dumps(value)
+    except Exception as e:
+        return str(e)
 
 
 def vse_slike_internal():
